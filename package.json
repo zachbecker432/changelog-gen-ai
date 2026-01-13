@@ -1,0 +1,47 @@
+{
+  "name": "changelog-gen",
+  "version": "1.0.0",
+  "description": "AI-powered changelog generator for GitHub and GitLab repositories",
+  "main": "dist/index.js",
+  "bin": {
+    "changelog-gen": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "changelog",
+    "git",
+    "openai",
+    "ai",
+    "github",
+    "gitlab",
+    "ci",
+    "automation"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "openai": "^4.77.0",
+    "semver": "^7.6.3",
+    "simple-git": "^3.27.0",
+    "yaml": "^2.6.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "@types/semver": "^7.5.8",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ]
+}

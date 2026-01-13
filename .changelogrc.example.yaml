@@ -1,0 +1,37 @@
+# Changelog Generator Configuration
+# Copy this file to .changelogrc.yaml and customize for your project
+
+# Output file path for the changelog
+output: CHANGELOG.md
+
+# OpenAI-compatible API endpoint
+# Supports OpenAI, Azure OpenAI, and local models (e.g., Ollama, LM Studio)
+openaiUrl: https://api.openai.com/v1
+
+# Model to use for summarization
+# Recommended: gpt-4o-mini (fast and cost-effective)
+# Alternatives: gpt-4o, gpt-4-turbo, or local model names
+model: gpt-4o-mini
+
+# How to determine "since last update"
+# Options:
+#   - tags: Use the latest semver git tag (v1.0.0, 1.2.3, etc.)
+#   - changelog: Parse the last version date from existing CHANGELOG.md
+#   - manual: Require explicit --from argument
+versionSource: tags
+
+# Include links to commits in the changelog entries
+includeCommitLinks: true
+
+# Commit message patterns to exclude from changelog
+# Useful for filtering out automated commits, dependency updates, etc.
+excludePatterns:
+  - "chore(deps):"
+  - "chore(deps-dev):"
+  - "Merge branch"
+  - "Merge pull request"
+  - "Merge remote-tracking"
+
+# Repository URL for commit links (optional)
+# If not specified, will be auto-detected from git remote
+# repoUrl: https://github.com/your-org/your-repo
