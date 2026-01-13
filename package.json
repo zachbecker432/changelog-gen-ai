@@ -1,10 +1,10 @@
 {
-  "name": "changelog-gen",
+  "name": "changelog-gen-ai",
   "version": "1.0.0",
   "description": "AI-powered changelog generator for GitHub and GitLab repositories",
   "main": "dist/index.js",
   "bin": {
-    "changelog-gen": "dist/index.js"
+    "changelog-gen-ai": "dist/index.js"
   },
   "scripts": {
     "build": "tsc",

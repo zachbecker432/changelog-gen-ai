@@ -18,7 +18,7 @@ export function createCLI(): Command {
   const program = new Command();
 
   program
-    .name('changelog-gen')
+    .name('changelog-gen-ai')
     .description('AI-powered changelog generator for GitHub and GitLab repositories')
     .version('1.0.0');
 
@@ -219,7 +219,7 @@ async function runInit(options: { force: boolean }): Promise<void> {
   });
 
   const yamlContent = `# Changelog Generator Configuration
-# See https://www.npmjs.com/package/changelog-gen for documentation
+# See https://www.npmjs.com/package/changelog-gen-ai for documentation
 
 ${configContent}`;
 
