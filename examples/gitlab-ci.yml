@@ -1,0 +1,100 @@
+# GitLab CI configuration for generating changelogs
+#
+# This job can be triggered:
+# 1. Manually via the GitLab UI (when: manual)
+# 2. When a new tag is pushed
+# 3. On demand before creating a release
+#
+# Required CI/CD variables:
+# - OPENAI_API_KEY: Your OpenAI API key (masked, protected)
+
+stages:
+  - changelog
+
+# Generate changelog on tag push
+generate_changelog:
+  stage: changelog
+  image: node:20
+  rules:
+    # Run on tag pushes
+    - if: $CI_COMMIT_TAG
+    # Allow manual triggering
+    - when: manual
+      allow_failure: true
+  variables:
+    # Ensure we have full git history
+    GIT_DEPTH: 0
+    GIT_STRATEGY: clone
+  before_script:
+    - npm install -g changelog-gen
+    - git config user.email "gitlab-ci@gitlab.com"
+    - git config user.name "GitLab CI"
+  script:
+    - |
+      # Determine version
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        VERSION="$CI_COMMIT_TAG"
+      elif [ -n "$CHANGELOG_VERSION" ]; then
+        VERSION="$CHANGELOG_VERSION"
+      else
+        VERSION=""
+      fi
+      
+      # Build version argument
+      VERSION_ARG=""
+      if [ -n "$VERSION" ]; then
+        VERSION_ARG="--version $VERSION"
+      fi
+      
+      # Generate changelog
+      changelog-gen generate --from latest-tag $VERSION_ARG
+  artifacts:
+    paths:
+      - CHANGELOG.md
+    expire_in: 1 week
+
+# Preview changelog without committing
+preview_changelog:
+  stage: changelog
+  image: node:20
+  when: manual
+  variables:
+    GIT_DEPTH: 0
+    GIT_STRATEGY: clone
+  before_script:
+    - npm install -g changelog-gen
+  script:
+    - changelog-gen generate --from latest-tag --dry-run
+  allow_failure: true
+
+# Commit changelog back to repository
+# Requires a project access token with write permissions
+commit_changelog:
+  stage: changelog
+  image: node:20
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - when: manual
+  variables:
+    GIT_DEPTH: 0
+    GIT_STRATEGY: clone
+  before_script:
+    - npm install -g changelog-gen
+    - git config user.email "gitlab-ci@gitlab.com"
+    - git config user.name "GitLab CI"
+    # Configure git to use project token for push
+    - git remote set-url origin "https://gitlab-ci-token:${PROJECT_ACCESS_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
+  script:
+    - changelog-gen generate --from latest-tag
+    - git add CHANGELOG.md
+    - git diff --staged --quiet || git commit -m "docs: update changelog"
+    - git push origin HEAD:$CI_COMMIT_REF_NAME
+  allow_failure: true
+
+# Example: Include in your existing .gitlab-ci.yml
+# ---
+# include:
+#   - local: 'examples/gitlab-ci.yml'
+#
+# Or copy the jobs you need into your main .gitlab-ci.yml

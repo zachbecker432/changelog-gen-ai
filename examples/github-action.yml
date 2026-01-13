@@ -1,0 +1,104 @@
+# GitHub Actions workflow for generating changelogs
+# 
+# This workflow can be triggered:
+# 1. Manually via workflow_dispatch
+# 2. When a new tag is pushed
+# 3. On demand before creating a release
+#
+# Required secrets:
+# - OPENAI_API_KEY: Your OpenAI API key
+
+name: Generate Changelog
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.2.3)'
+        required: false
+        type: string
+      dry_run:
+        description: 'Dry run (preview only)'
+        required: false
+        type: boolean
+        default: false
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history needed for changelog generation
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Generate Changelog
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          # Install changelog-gen
+          npm install -g changelog-gen
+          
+          # Build version argument
+          VERSION_ARG=""
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION_ARG="--version ${{ github.event.inputs.version }}"
+          elif [ "${{ github.ref_type }}" == "tag" ]; then
+            VERSION_ARG="--version ${{ github.ref_name }}"
+          fi
+          
+          # Build dry-run argument
+          DRY_RUN_ARG=""
+          if [ "${{ github.event.inputs.dry_run }}" == "true" ]; then
+            DRY_RUN_ARG="--dry-run"
+          fi
+          
+          # Generate changelog
+          changelog-gen generate --from latest-tag $VERSION_ARG $DRY_RUN_ARG
+      
+      - name: Commit and push changelog
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git diff --staged --quiet || git commit -m "docs: update changelog for ${{ github.ref_name || github.event.inputs.version }}"
+          git push
+
+# Alternative: Simpler workflow for manual triggering
+# ---
+# name: Update Changelog
+# 
+# on:
+#   workflow_dispatch:
+# 
+# jobs:
+#   update:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
+#         with:
+#           fetch-depth: 0
+#       
+#       - name: Generate Changelog
+#         env:
+#           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+#         run: npx changelog-gen generate --from latest-tag
+#       
+#       - name: Create Pull Request
+#         uses: peter-evans/create-pull-request@v6
+#         with:
+#           title: "docs: update changelog"
+#           commit-message: "docs: update changelog"
+#           branch: changelog-update
