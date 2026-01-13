@@ -101,11 +101,20 @@ export class GitAnalyzer {
   ): Promise<CommitInfo[]> {
     try {
       // Get commit logs
-      const log: LogResult = await this.git.log({
-        from: from || undefined,
-        to,
-        '--name-only': null,
-      });
+      // When 'from' is specified, get commits in the range from..to
+      // When 'from' is empty, get all commits reachable from 'to'
+      let log: LogResult;
+
+      if (from) {
+        log = await this.git.log({
+          from,
+          to,
+          '--name-only': null,
+        });
+      } else {
+        // No starting point - get all commits reachable from 'to'
+        log = await this.git.log([to, '--name-only']);
+      }
 
       const commits: CommitInfo[] = [];
 
